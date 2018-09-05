@@ -5,11 +5,8 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 import requests
 import re
-from config import *
 import pymongo
-
-#这个为初始版本
-#可以进行许多优化与改进的地方，也可以使用Scrapy框架进行爬取
+from multiprocessing import Pool
 
 client=pymongo.MongoClient(MONGO_URL)   #链接至MongoDB文档型数据库
 db=client[MONGO_DB]
@@ -53,7 +50,7 @@ def next_page(page_number):
     except TimeoutException:
         next_page(page_number)
 
-# 解析目标网页信息
+#解析职位目录的URL信息
 def get_products():
     html = browser.page_source         #页面信息
     pattern = re.compile('<input.*?class="checkbox".*?<span>.*?<a.*?target="_blank".*?href="(.*?)".*?onmousedown.*?</a>.*?</span>',re.S)
@@ -61,24 +58,24 @@ def get_products():
     for url in items:
         get_job(url)
 
-#解析职位信息
+#获取具体职位信息
 def get_job(URL):
     html = requests.get(URL)
     html.encoding = 'gbk'         #根据该网址的编码进行设置,避免乱码
     pattern = re.compile(
-        '<h1.*?title="(.*?)".*?class="lname">(.*?)</span>.*?<strong>(.*?)</strong>.*?title.*?>(.*?)<em.*?'
-        'class="i4"></em>(.*?)</span>.*?上班地址：</span>(.*?)</p>', re.S)
+        '<h1.*?title="(.*?)".*?<strong>(.*?)</strong>.*?title="(.*?)".*?title="(.*?)'
+        '&nbsp;&nbsp;\|&nbsp;&nbsp;(.*?)&nbsp;&nbsp;\|&nbsp;&nbsp;.*?人&nbsp;&nbsp;\|&nbsp;&nbsp;(.*?)发布.*?">.*?上班地址：</span>(.*?)</p>', re.S)
     items = re.findall(pattern, html.text)
-    for item in items:                     #使用字典存储各种信息
+    for item in items:
         message = {
             "职位": item[0],
-            "地点": item[1],
-            "薪资": item[2],
-            "公司": item[3],
-            "发布时间": item[4],
-            "上班地点": item[5].replace("\t", "")
+            "薪资": item[1],
+            "公司名字": item[2],
+            "公司地点": item[3],
+            "工作经验": item[4],
+            "发布时间": item[5],
+            "上班地点": item[6].replace("\t", "")
         }
-        #print(message)
         save_to_mongo(message)
 
 #保存至MONGODB
@@ -99,4 +96,5 @@ def main():
         browser.close()
 
 if __name__ == '__main__':
-    main()
+    pool=Pool(3)             #多进程
+    pool.apply_async(main())
