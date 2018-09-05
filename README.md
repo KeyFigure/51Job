@@ -1,9 +1,9 @@
 基于Selenium的前途无忧网职位信息爬取 
 =======
 ## 开发环境
-系统:windows <br>
+系统:windows10 <br>
 IDE:Pycharm <br>
-Web框架:Django <br>
+框架:Selenium <br>
 
 ## 项目
 
