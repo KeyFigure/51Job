@@ -35,7 +35,7 @@ def search(KEYWORD, url):
         get_products()
         return total.text
     except TimeoutException:
-        return search()
+        return search(KEYWORD, url)
 
 # 加载翻页后内容
 def next_page(page_number):
