@@ -8,11 +8,14 @@ import re
 import pymongo
 from multiprocessing import Pool
 
-client=pymongo.MongoClient(MONGO_URL)   #链接至MongoDB文档型数据库
+#链接至MongoDB文档型数据库
+client=pymongo.MongoClient(MONGO_URL)   
 db=client[MONGO_DB]
 
-browser = webdriver.PhantomJS(service_args=SERVICE_ARGS)    #使用隐形的浏览器PhantomJS
-wait = WebDriverWait(browser, 10)       #设置浏览器超时时间
+#使用隐形的浏览器PhantomJS
+browser = webdriver.PhantomJS(service_args=SERVICE_ARGS)  
+#设置浏览器超时时间
+wait = WebDriverWait(browser, 10)       
 
 # 设置窗口大小
 # browser.set_window_size(1400, 900)
@@ -22,13 +25,16 @@ def search(KEYWORD, url):
     print("正在搜索")
     try:
         browser.get(url)
-        input = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "#kwdselectid")))      #判断输入框是否存在
+        #判断输入框是否存在
+        input = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "#kwdselectid")))  
+        #判断搜索键是否有效的
         submit = wait.until(EC.element_to_be_clickable(
-            (By.CSS_SELECTOR, "body > div.content > div > div.fltr.radius_5 > div > button")))     #判断搜索键是否有效的
+            (By.CSS_SELECTOR, "body > div.content > div > div.fltr.radius_5 > div > button")))    
         input.send_keys(KEYWORD)
         submit.click()
+        #确定总页码
         total = wait.until(EC.presence_of_element_located(
-            (By.CSS_SELECTOR, "#resultList > div.dw_page > div > div > div > span:nth-child(3)")))    #确定总页码
+            (By.CSS_SELECTOR, "#resultList > div.dw_page > div > div > div > span:nth-child(3)")))    
         get_products()
         return total.text
     except TimeoutException:
@@ -38,30 +44,36 @@ def search(KEYWORD, url):
 def next_page(page_number):
     print("正在翻页", page_number)
     try:
-        input = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "#jump_page")))      #定向翻页
+        #定向翻页
+        input = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "#jump_page")))      
+        #判断确定键是否可行
         submit = wait.until(
-            EC.element_to_be_clickable((By.CSS_SELECTOR, "#resultList > div.dw_page > div > div > div > span.og_but")))    #判断确定键是否可行
+            EC.element_to_be_clickable((By.CSS_SELECTOR, "#resultList > div.dw_page > div > div > div > span.og_but")))   
         input.clear()
         input.send_keys(page_number)
         submit.click()
+        #检查元素中的文本内容是否存在指定的内容
         wait.until(EC.text_to_be_present_in_element(
-            (By.CSS_SELECTOR, "#resultList > div.dw_page > div > div > div > ul "), str(page_number)))      #检查元素中的文本内容是否存在指定的内容
+            (By.CSS_SELECTOR, "#resultList > div.dw_page > div > div > div > ul "), str(page_number)))     
         get_products()
     except TimeoutException:
         next_page(page_number)
 
 #解析职位目录的URL信息
 def get_products():
-    html = browser.page_source         #页面信息
+    #页面信息
+    html = browser.page_source      
+    #使用正则表达式进行匹配
     pattern = re.compile('<input.*?class="checkbox".*?<span>.*?<a.*?target="_blank".*?href="(.*?)".*?onmousedown.*?</a>.*?</span>',re.S)
-    items=re.findall(pattern,html)        #使用正则表达式进行匹配
+    items=re.findall(pattern,html)        
     for url in items:
         get_job(url)
 
 #获取具体职位信息
 def get_job(URL):
     html = requests.get(URL)
-    html.encoding = 'gbk'         #根据该网址的编码进行设置,避免乱码
+    #根据该网址的编码进行设置,避免乱码
+    html.encoding = 'gbk'         
     pattern = re.compile(
         '<h1.*?title="(.*?)".*?<strong>(.*?)</strong>.*?title="(.*?)".*?title="(.*?)'
         '&nbsp;&nbsp;\|&nbsp;&nbsp;(.*?)&nbsp;&nbsp;\|&nbsp;&nbsp;.*?人&nbsp;&nbsp;\|&nbsp;&nbsp;(.*?)发布.*?">.*?上班地址：</span>(.*?)</p>', re.S)
