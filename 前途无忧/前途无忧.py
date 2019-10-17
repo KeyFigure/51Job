@@ -28,7 +28,7 @@ def search(KEYWORD, url):
         input.send_keys(KEYWORD)
         submit.click()
         total = wait.until(EC.presence_of_element_located(
-            (By.CSS_SELECTOR, "#resultList > div.dw_page > div > div > div > span:nth-child(2)")))    #确定总页码
+            (By.CSS_SELECTOR, "#resultList > div.dw_page > div > div > div > span:nth-child(3)")))    #确定总页码
         get_products()
         return total.text
     except TimeoutException:
