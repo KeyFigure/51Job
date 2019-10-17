@@ -101,12 +101,14 @@ def save_to_mongo(result):
 def main():
     try:
         total = search(KEYWORD, URL)
-        total = int(re.compile("(\d+)").search(total).group(1))     #获取总页码
+        #获取总页码
+        total = int(re.compile("(\d+)").search(total).group(1))     
         for i in range(2,total+1):
             next_page(i)
     finally:
         browser.close()
 
 if __name__ == '__main__':
-    pool=Pool(3)             #多进程
+    #多进程
+    pool=Pool(3)             
     pool.apply_async(main())
